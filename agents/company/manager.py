@@ -32,7 +32,6 @@ class Manager(Agent):
     
     def think(self):
         if self.state == 'Thinking':
-            self.substate = 'Browing'
             self.transition('Thought')
 
             for recipient in self.recipients:

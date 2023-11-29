@@ -34,12 +34,16 @@ class Agent(ABC):
 
         system_prompt = self.load_file_as_string(self.system_prompt_dir)
 
-        for recipient in self.recipients:
-            system_prompt += f' To switch to {recipient}, say SWITCH TO {recipient.upper()}.'
+        if len(self.recipients) > 1:
+            for recipient in self.recipients:
+                system_prompt += f' To switch to {recipient}, say SWITCH TO {recipient.upper()}.'
 
-        for tool in self.tools:
+        if self.tools:
+            system_prompt += ' You are an agent with tools to help you accomplish your tasks. Simply respond in ALL CAPS based on the instructions that follow to use your tool. When you use a tool, you will talk to another computer. Once talking to this computer, you cannot talk to the outside world. You must make all the decisions yourself. Here are the tools you have available: '
+
+        for idx, tool in enumerate(self.tools):
             print(tool.command)
-            system_prompt += tool.command
+            system_prompt += f'\n{idx + 1} {tool.command}'
         print(system_prompt)
         self.llm = llm_factory(identifier = self.identifier, system_prompt = system_prompt)
 
@@ -66,7 +70,7 @@ class Agent(ABC):
 
         for tool in self.tools:
             tool_message = tool.run(self.response)
-
+            print(tool_message)
             if tool_message != None:
                 self.message = tool_message
                 self.substate = tool.identifier

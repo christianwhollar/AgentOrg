@@ -42,8 +42,8 @@ class SearchTool(Tool):
             body = str(web_page.body)
             self.webpagebody = web_page.body
             self.state = 'Exit'
-            return f'Here is the result of your search: {body[:20]}. You are now exiting SEARCH.'
+            return f'Here is the result of your search: {body[:100]}. You are now exiting SEARCH.'
         
-        elif self.state == 'Exit':
+        else:
             self.state = 'Ready'
             return None
