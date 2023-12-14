@@ -62,6 +62,12 @@ class Auto(Agent):
         else:
             print('Cannot send response in the current state!')
 
+    def addMessage(self, message: str):
+        self.message_queue.put(message)
+
+    def getResponse(self) -> str:
+        return self.response
+
     def update(self):
         for recipient in self.recipients:
             if f'SWITCH TO {recipient.upper()}' in self.response:
