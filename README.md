@@ -45,6 +45,24 @@ print(response)
 # Output: Hello Christian! How can I assist you today?
 ```
 
+### Interface Setup
+
+#### Step 1: Create an Environment File
+To initialize the interface, start by setting up your environment file.
+
+1. Create a new file named `.env` in the root directory of the repository.
+2. Open the `.env` file and add your OpenAI API key in the following format:
+```
+OPENAI_API_KEY = 'YOUR KEY HERE'
+```
+#### Step 2: Launch the Interface
+Once the `.env` file is set up, you can launch the interface using run `main.py`.
+
+#### Interface Preview
+Below is a preview of what the interface looks like after launching:
+
+![Interface Preview](assets/InterfaceSnippet.png)
+
 ### Continuous Operation
 
 For ongoing interactions, the agent can run in a loop. Messages are added to its queue, and responses can be retrieved as they are processed. This method is suitable for scenarios where the agent is expected to handle multiple requests over time.
