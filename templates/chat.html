@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Auto</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        @keyframes backgroundAnimation {
+            0%, 100% { 
+                background-color: #003300; 
+                box-shadow: inset 0 0 10px #006600;
+            }
+            50% { 
+                background-color: #002200; 
+                box-shadow: inset 0 0 20px #009900;
+            }
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: radial-gradient(circle, #003300, #000000);
+            animation: backgroundAnimation 8s ease-in-out infinite;
+            color: #f1f1f1;
+        }
+        .chat-container {
+            width: 80%;
+            max-width: 500px;
+            height: 70vh;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            overflow: hidden;
+            background-color: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #005500;
+            color: #e0f0e0;
+            text-align: center;
+            padding: 15px;
+            font-size: 24px;
+            border-bottom: 4px solid #003300;
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #122112;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-message {
+            max-width: 75%;
+            padding: 10px;
+            border-radius: 15px;
+            font-size: 16px;
+            margin: 5px 0;
+            word-wrap: break-word;
+            line-height: 1.4;
+            position: relative;
+        }
+        .user-message {
+            align-self: flex-end;
+            background-color: #007300;
+            color: #f1f1f1;
+            margin-left: 25%;
+            box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
+        }
+        .agent-message {
+            align-self: flex-start;
+            background-color: #262626;
+            color: #f1f1f1;
+            margin-right: 25%;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+        .input-area {
+            padding: 15px;
+            background-color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            border-top: 3px solid #262626;
+        }
+        #message-input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 25px;
+            border: 1px solid #262626;
+            background-color: #262626;
+            color: #e0e0e0;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #005500;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #003300;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">Chat With Auto</div>
+        <div class="messages" id="chat-container">
+            <!-- Chat messages will appear here -->
+        </div>
+        <div class="input-area">
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('message-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            let messageInput = document.getElementById('message-input');
+            let message = messageInput.value;
+            messageInput.value = '';
+
+            addChatMessage(message, 'user-message');
+            sendToServer(message);
+        }
+
+        function sendToServer(message) {
+            fetch('/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.response) {
+                    addChatMessage(data.response, 'agent-message');
+                }
+            })
+            .catch(err => console.error('Error:', err));
+        }
+
+        function addChatMessage(message, className) {
+            let chatContainer = document.getElementById('chat-container');
+            let messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-message', className);
+            messageDiv.textContent = message;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // function pollSubstate() {
+        //     fetch('/substate')
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             if (data.message) {
+        //                 addChatMessage(data.message, 'agent-message');
+        //             }
+        //         }).catch(err => console.error('Error:', err));
+        // }
+
+        // setInterval(pollSubstate, 1000);
+    </script>
+</body>
+</html>

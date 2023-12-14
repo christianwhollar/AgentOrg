@@ -17,6 +17,10 @@ class SearchTool(Tool):
     def command(self) -> str:
         return ' To perform an internet search, say SEARCH.'
     
+    @property
+    def example(self) -> str:
+        return ' User says: I want to learn more about Python. Agent says: SEARCH. You are the agent.'
+
     def run(self, response):
 
         if self.state == 'Ready' and 'SEARCH' in response:
@@ -41,8 +45,8 @@ class SearchTool(Tool):
             web_page = self.web_search.open(link)
             body = str(web_page.body)
             self.webpagebody = web_page.body
-            self.state = 'Exit'
-            return f'Here is the result of your search: {body[:100]}. You are now exiting SEARCH.'
+            self.state = 'Exit'            
+            return f'Here is the result of your search: {body[:3000]}. You are now exiting SEARCH.'
         
         else:
             self.state = 'Ready'

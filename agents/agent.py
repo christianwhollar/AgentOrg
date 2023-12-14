@@ -39,11 +39,22 @@ class Agent(ABC):
                 system_prompt += f' To switch to {recipient}, say SWITCH TO {recipient.upper()}.'
 
         if self.tools:
-            system_prompt += ' You are an agent with tools to help you accomplish your tasks. Simply respond in ALL CAPS based on the instructions that follow to use your tool. When you use a tool, you will talk to another computer. Once talking to this computer, you cannot talk to the outside world. You must make all the decisions yourself. Here are the tools you have available: '
+            system_prompt += ' You are an agent with tools to help you accomplish your tasks to help your user. These tools can be activated by you saying something in all caps. When you use a tool, you will talk to another computer instead of the user that you are assisting. Once talking to this computer, you cannot talk to the outside world. You must make all the decisions yourself. '
+
+        if self.tools:
+            system_prompt += '\nHere are your tools...'
 
         for idx, tool in enumerate(self.tools):
-            print(tool.command)
             system_prompt += f'\n{idx + 1} {tool.command}'
+
+        if self.tools:
+            system_prompt += '\nHere are some examples of how to use your tools...'
+
+        for idx, tool in enumerate(self.tools):
+            system_prompt += f'\n{idx + 1} {tool.example}'
+
+        if self.tools:
+            system_prompt += f'\nRemember, if you say any of the upper case words, you will immediately trigger the computer where you will be making the decisions using your voice. You are the one that will say the words, not the user. The only thing you need to see in all caps is the magic words like MAKE FILE. You are assisting the user with the tools you have been given. Make sure to use your tools when you can. The user will ask to use them, simply respond with the commands you have been given.'
         print(system_prompt)
         self.llm = llm_factory(identifier = self.identifier, system_prompt = system_prompt)
 
@@ -63,20 +74,10 @@ class Agent(ABC):
     def send(self):
         pass
 
+    @abstractmethod
     def update(self):
-        for recipient in self.recipients:
-            if f'SWITCH TO {recipient.upper()}' in self.response:
-                self.recipient = recipient
+        pass
 
-        for tool in self.tools:
-            tool_message = tool.run(self.response)
-            print(tool_message)
-            if tool_message != None:
-                self.message = tool_message
-                self.substate = tool.identifier
-            else:
-                self.substate = None
-    
     @abstractmethod
     def run(self):
         pass

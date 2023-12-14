@@ -6,7 +6,7 @@ import re
 
 class AppendFile(Tool):
     def __init__(self):
-        self.state = 'Ready'
+        self.toolstate = 'Ready'
 
     @property
     def identifier(self) -> str:
@@ -16,6 +16,10 @@ class AppendFile(Tool):
     def command(self) -> str:
         return ' To write to a file, say APPEND FILE.'
     
+    @property
+    def example(self) -> str:
+        return ' User says: I want you to make me a file. After the agent has made the file, they would say APPEND FILE.'
+
     def list_files(self, directory):
         files_dict = {}
         file_index = 0
@@ -30,25 +34,25 @@ class AppendFile(Tool):
         return files_dict
 
     def run(self, response):
-        if 'Ready' == self.state and 'APPEND FILE' in response:
-            self.state = 'Select'
+        if self.toolstate == 'Ready' and 'APPEND FILE' in response:
+            self.toolstate = 'Select'
             self.files = self.list_files(directory = 'builds')
             print(self.files)
             formatted_files = ', '.join([f'{index} {file}' for index, file in self.files.items()])
             return f'Here are the files available: {formatted_files}. Say the index number of the link you would like to write to.'
         
-        elif 'Select' == self.state:
+        elif self.toolstate == 'Select':
             match = re.search(r'\d', response)
             index_file = int(match.group()) if match else 0
             self.file = self.files[index_file]
-            self.state = 'Append'
+            self.toolstate = 'Append'
             return f'You have selected to append to {self.file}. Send me exactly what to put in this file within triple quotes: \'\'\'YOUR_RESPONSE_HERE\'\'\'. Use \\n for new lines and \\t for tabs.'
 
-        elif 'Append' == self.state:
+        elif self.toolstate == 'Append':
             pattern = r"'''(.*?)'''"
             match = re.search(pattern, response, re.DOTALL)
             if match:
-                self.state = 'Exit'
+                self.toolstate = 'Exit'
                 content = match.group(1)
                 if 'py' in self.file:
                     py_file = PythonFile(f'builds/{self.file}')
@@ -62,5 +66,5 @@ class AppendFile(Tool):
                 return 'I failed to detect the content of your file. Send me exactly what to put in this file within triple quotes: \'\'\'YOUR_RESPONSE_HERE\'\'\'. Use \\n for new lines and \\t for tabs.'
         
         else:
-            self.state = 'Ready'
+            self.toolstate = 'Ready'
             return None

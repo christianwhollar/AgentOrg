@@ -1,59 +1,28 @@
-from llms.chatgpt35turbo.chatgpt35turbo import ChatGPT35Turbo
+from flask import Flask, render_template, request, jsonify
+from tools.web_search import SearchTool
+from tools.mkfile import MakeFile
+from tools.mkdir import MakeDir
+from tools.apfile import AppendFile
+from agents.auto import Auto
 from dotenv import load_dotenv
+
 load_dotenv()
 
-def load_file_as_string(file_path):
-    with open(file_path, 'r') as file:
-        content = file.read()
-        # Replace newlines with empty string
-        content_without_newlines = content.replace('\n', '')
-    return content_without_newlines
+app = Flask(__name__)
+app.static_folder = './static/'
 
-manager_system_prompt = load_file_as_string(file_path = 'prompts/manager.txt')
-architect_system_prompt = load_file_as_string(file_path = 'prompts/architect.txt')
+tool_kit = [SearchTool(), MakeFile(), MakeDir(), AppendFile()]
+agent = Auto(identifier='chatgpt35turbo', system_prompt_dir='prompts/agent.txt', recipients=['User'], tools=tool_kit)
 
-manager = ChatGPT35Turbo(system_prompt = manager_system_prompt)
-architect = ChatGPT35Turbo(system_prompt = architect_system_prompt)
+@app.route("/")
+def index():
+    return render_template("chat.html")
 
-customer_status = True
-architect_status = False
-stop_count = 0
-last_manager_message = ''
-last_architect_message = ''
+@app.route("/send", methods=["POST"])
+def send():
+    message = request.json["message"]
+    response = agent.run(message)
+    return jsonify({"response": response}), 200
 
-while True:
-    if stop_count > 5:
-        break
-
-    if customer_status:
-        message = input("Customer: ")
-    elif architect_status:
-        message = architect.get_response(user_prompt = last_manager_message)
-        print(f'Architect: {message}')
-        stop_count += 1
-
-    if message.lower() == "quit":
-      break 
-
-    last_manager_message = manager.get_response(user_prompt = message)
-
-    if 'SWITCH TO SOFTWARE ARCHITECT' in last_manager_message:
-        customer_status = False
-        architect_status = True
-
-        message = 'Switch complete.'
-
-        last_manager_message = manager.get_response(user_prompt = message)
-
-    elif 'SWITCH TO CUSTOMER' in last_manager_message:
-        customer_status = False
-        architect_status = True
-
-        message = 'Switch complete.'
-
-        last_manager_message = manager.get_response(user_prompt = message)
-
-    # if 'SWITCH TO SOFTWARE ENGINEER' in last_architect_message:
-
-
-    # print(f'\nManager: {last_manager_message}\n')
+if __name__ == "__main__":
+    app.run()

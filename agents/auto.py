@@ -1,9 +1,19 @@
+import threading
+import queue
 from agents.agent import Agent
 
 class Auto(Agent):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message_queue = queue.Queue()
+        self.running = True
+        self.agent_thread = threading.Thread(target=self.run_loop)
+        self.agent_thread.start()
+        self.initialize()
+
     def transition(self, event):
-        if self.state == 'Initializing' and event == 'Intialized':
+        if self.state == 'Initializing' and event == 'Initialized':
             self.state = 'Receiving'
 
         elif self.state == 'Receiving' and event == 'Received':
@@ -14,14 +24,13 @@ class Auto(Agent):
 
         elif self.state == 'Sending' and event == 'Sent':
             self.state = 'Receiving'
-
         else:
             print('Invalid transition event!')
 
     def initialize(self):
         if self.state == 'Initializing':
             self.pre()
-            self.transition('Intialized')
+            self.transition('Initialized')
 
     def receive(self, message):
         if self.state == 'Receiving':
@@ -29,28 +38,44 @@ class Auto(Agent):
             self.transition('Received')
         else:
             print('Cannot receive response in the current state!')
-    
+
     def think(self):
         if self.state == 'Thinking':
             self.transition('Thought')
-
             for recipient in self.recipients:
                 if self.recipient != recipient:
-                    self.message = self.message + f'\nIf you are ready to switch to the {recipient}, say SWITCH TO {recipient.upper()}.'
-
+                    self.message += f'\nIf you are ready to switch to {recipient}, say SWITCH TO {recipient.upper()}.'
         else:
             print('Cannot think in the current state!')
 
     def send(self):
-        print(self.message)
         if self.state == 'Sending':
-            self.update()
-            self.response = 'TEST MODE' #self.llm.get_response(self.message)
-            self.transition('Sent')
+            try:
+                self.response = self.llm.get_response(self.message)
+                print(self.message)
+                print(self.response)
+
+                self.update()
+                self.transition('Sent')
+            except Exception as e:
+                print(f'Error during send: {e}')
         else:
             print('Cannot send response in the current state!')
-        print(self.response)
-        
+
+    def update(self):
+        for recipient in self.recipients:
+            if f'SWITCH TO {recipient.upper()}' in self.response:
+                self.recipient = recipient
+
+        for tool in self.tools:
+            tool_message = tool.run(self.response)
+            if tool_message is not None:
+                self.substate = tool.identifier
+                print(self.substate)
+                self.message_queue.put(f'COMPUTER SAYS: {tool_message}')
+            else:
+                self.substate = None
+
     def run(self, message) -> str:
         if not self.substate:
             self.receive(message)
@@ -59,3 +84,16 @@ class Auto(Agent):
             self.state = 'Sending'
         self.send()
         return self.response
+
+    def run_loop(self):
+        while self.running:
+            try:
+                message = self.message_queue.get(block=True)
+                if message:
+                    self.run(message)
+            except queue.Empty:
+                pass
+
+    def stop(self):
+        self.running = False
+        self.agent_thread.join()

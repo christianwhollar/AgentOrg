@@ -1,4 +1,4 @@
 {
-    "total_tokens": 6020,
-    "total_cost": 0.012039999999999999
+    "total_tokens": 70427,
+    "total_cost": 0.140854
 }

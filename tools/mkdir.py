@@ -14,12 +14,16 @@ class MakeDir(Tool):
     def command(self) -> str:
         return ' To make a folder, say MAKE FOLDER'
     
+    @property
+    def example(self) -> str:
+        return ' User says: I want you to make me a folder. Agent says: MAKE FOLDER.'
+
     def run(self, response):
-        if 'Ready' == self.state and 'MAKE FOLDER' in response:
+        if self.state == 'Ready' and 'MAKE FOLDER' in response:
             self.state = 'Make'
             return f'Give me exactly what to name the folder in between triple single quotes: \'\'\'YOUR_NAME_HERE\'\'\''
         
-        elif 'Make' == self.state:
+        elif self.state == 'Make':
             pattern = r"'''(.*?)'''"
             match = re.search(pattern, response, re.DOTALL)
             if match:
